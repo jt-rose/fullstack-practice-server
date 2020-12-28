@@ -11,7 +11,7 @@ interface Monster {
 }
 
 
-const mockDB: Monster[] = [
+let mockDB: Monster[] = [
     {
         name: "Dracula",
         location: "Transylvania",
@@ -30,14 +30,36 @@ const mockDB: Monster[] = [
 ]
 
 app.get("/hellonode", (_req, res) => {
-    res.header("Access-Control-Allow-Origin", "http://localhost:3000")
+    res.header("Access-Control-Allow-Origin", "*")
     res.json({
         text: "hello Node"
     })
 })
 
 app.get("/monsterData", (_req, res) => {
-    res.header("Access-Control-Allow-Origin", "http://localhost:3000")
+    res.header("Access-Control-Allow-Origin", "*")
+    res.json({
+        monsterData: mockDB
+    })
+})
+
+app.get("/add", (req, res) => {
+    const { name, location, hobbies } = req.query;
+    res.header("Access-Control-Allow-Origin", "*")
+    mockDB = [...mockDB, {
+        name: typeof name === 'string' ? name : "",
+        location: typeof location === 'string' ? location : "",
+        hobbies: typeof hobbies === 'string' ? hobbies : ""
+    }]
+    res.json({
+        monsterData: mockDB
+    })
+})
+
+app.get("/remove/:monster", (req, res) => {
+    const removeMonster = req.params.monster
+    res.header("Access-Control-Allow-Origin", "*")
+    mockDB = mockDB.filter(monster => monster.name !== removeMonster)
     res.json({
         monsterData: mockDB
     })
