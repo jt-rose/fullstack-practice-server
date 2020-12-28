@@ -31,6 +31,7 @@ const mockDB: Monster[] = [
 */
 
 app.get("/hellonode", (_req, res) => {
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000")
     res.json({
         text: "hello Node"
     })
