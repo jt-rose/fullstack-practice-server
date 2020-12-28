@@ -3,7 +3,7 @@ import express = require("express")
 const app = express()
 
 const port = process.env.PORT || 5000
-/*
+
 interface Monster {
     name: string;
     location: string;
@@ -28,12 +28,18 @@ const mockDB: Monster[] = [
         hobbies: "spelunking"
     }
 ]
-*/
 
 app.get("/hellonode", (_req, res) => {
     res.header("Access-Control-Allow-Origin", "http://localhost:3000")
     res.json({
         text: "hello Node"
+    })
+})
+
+app.get("/monsterData", (_req, res) => {
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000")
+    res.json({
+        monsterData: mockDB
     })
 })
 
