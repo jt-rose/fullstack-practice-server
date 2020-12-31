@@ -2,12 +2,14 @@ import express = require("express")
 import mongoDB = require("mongodb")
 import morgan = require("morgan")
 import helmet = require("helmet")
+import cors = require("cors")
 import { mongoURI } from "./mongoConnection"
 
 const { MongoClient } = mongoDB
 const app = express()
 app.use(helmet())
 app.use(morgan("dev"))
+app.use(cors())
 const port = process.env.PORT || 5000
 
 MongoClient.connect(
@@ -20,14 +22,12 @@ MongoClient.connect(
         const monsterCollection = db.collection("monsters")
 
         app.get("/hellonode", (_req, res) => {
-            res.header("Access-Control-Allow-Origin", "*")
             res.json({
                 text: "hello Node"
             })
         })
         
         app.get("/monsterData", (_req, res) => {
-            res.header("Access-Control-Allow-Origin", "*")
             monsterCollection.find().toArray()
             .then( result => {
                 res.json(result)
@@ -36,7 +36,6 @@ MongoClient.connect(
         })
         
         app.get("/add", (req, res) => {
-            res.header("Access-Control-Allow-Origin", "*")
             const { name, location, hobbies } = req.query;
             const newMonster = {
                 name: typeof name === 'string' ? name : "",
@@ -53,7 +52,6 @@ MongoClient.connect(
         })
 
         app.get("/edit", (req, res) => {
-            res.header("Access-Control-Allow-Origin", "*")
             const { monsterID, name, location, hobbies } = req.query;
             const editID = typeof monsterID === "string" ? monsterID : ""
             const update = { name, location, hobbies }
@@ -69,7 +67,6 @@ MongoClient.connect(
         })
         
         app.get("/remove/:monsterID", (req, res) => {
-            res.header("Access-Control-Allow-Origin", "*")
             const removeID = req.params.monsterID
             monsterCollection.deleteOne({ _id: new mongoDB.ObjectID(removeID) })
             .then( _result => {
