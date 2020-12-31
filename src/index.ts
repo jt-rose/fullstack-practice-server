@@ -1,9 +1,11 @@
 import express = require("express")
 import mongoDB = require("mongodb")
-import { mongoURI } from "./mongoConnection";
+import morgan = require("morgan")
+import { mongoURI } from "./mongoConnection"
 
 const { MongoClient } = mongoDB
 const app = express()
+app.use(morgan("dev"))
 const port = process.env.PORT || 5000
 
 MongoClient.connect(
