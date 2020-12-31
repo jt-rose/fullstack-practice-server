@@ -1,9 +1,8 @@
 import express = require("express")
+import mongoDB = require("mongodb")
+import { mongoURI } from "./mongoConnection";
 
-const app = express()
-
-const port = process.env.PORT || 5000
-
+/*
 interface Monster {
     name: string;
     location: string;
@@ -28,45 +27,86 @@ let mockDB: Monster[] = [
         hobbies: "spelunking"
     }
 ]
+*/
+const { MongoClient } = mongoDB
+const app = express()
+const port = process.env.PORT || 5000
 
-app.get("/hellonode", (_req, res) => {
-    res.header("Access-Control-Allow-Origin", "*")
-    res.json({
-        text: "hello Node"
-    })
-})
+MongoClient.connect(
+    mongoURI, 
+    {
+        useUnifiedTopology: true
+    }).then(client => {
+        console.log('Connected to Database')
+        const db = client.db("monster-mash")
+        const monsterCollection = db.collection("monsters")
 
-app.get("/monsterData", (_req, res) => {
-    res.header("Access-Control-Allow-Origin", "*")
-    res.json({
-        monsterData: mockDB
-    })
-})
+        app.get("/hellonode", (_req, res) => {
+            res.header("Access-Control-Allow-Origin", "*")
+            res.json({
+                text: "hello Node"
+            })
+        })
+        
+        app.get("/monsterData", (_req, res) => {
+            res.header("Access-Control-Allow-Origin", "*")
+            monsterCollection.find().toArray()
+            .then( result => {
+                res.json(result)
+            })
+            .catch( err => console.error(err))
+        })
+        
+        app.get("/add", (req, res) => {
+            res.header("Access-Control-Allow-Origin", "*")
+            const { name, location, hobbies } = req.query;
+            const newMonster = {
+                name: typeof name === 'string' ? name : "",
+                location: typeof location === 'string' ? location : "",
+                hobbies: typeof hobbies === 'string' ? hobbies : ""
+            }
+            monsterCollection.insertOne(newMonster).then( _result => {
+                monsterCollection.find().toArray()
+                .then( result => {
+                    res.json(result)
+                })
+            })
+            .catch( err => console.error(err))
+        })
 
-app.get("/add", (req, res) => {
-    const { name, location, hobbies } = req.query;
-    res.header("Access-Control-Allow-Origin", "*")
-    mockDB = [...mockDB, {
-        name: typeof name === 'string' ? name : "",
-        location: typeof location === 'string' ? location : "",
-        hobbies: typeof hobbies === 'string' ? hobbies : ""
-    }]
-    res.json({
-        monsterData: mockDB
-    })
-})
-
-app.get("/remove/:monster", (req, res) => {
-    const removeMonster = req.params.monster
-    res.header("Access-Control-Allow-Origin", "*")
-    mockDB = mockDB.filter(monster => monster.name !== removeMonster)
-    res.json({
-        monsterData: mockDB
-    })
-})
-
-app.listen(port, () => {
-    console.log(
-        `listening on port ${port}`
-    )
-})
+        app.get("/edit", (req, res) => {
+            res.header("Access-Control-Allow-Origin", "*")
+            const { monsterID, name, location, hobbies } = req.query;
+            const editID = typeof monsterID === "string" ? monsterID : ""
+            const update = { name, location, hobbies }
+            
+            monsterCollection.replaceOne({_id: new mongoDB.ObjectID(editID)}, update)
+            .then( _result => {
+                console.log(_result)
+                monsterCollection.find().toArray().then( result => {
+                    res.json(result)
+                }).catch(err => console.error(err + `! No ${name} found`))
+            })
+            .catch( err => console.error(err))
+        })
+        
+        app.get("/remove/:monsterID", (req, res) => {
+            res.header("Access-Control-Allow-Origin", "*")
+            const removeID = req.params.monsterID
+            console.log(removeID)
+            monsterCollection.deleteOne({ _id: new mongoDB.ObjectID(removeID) })
+            .then( _result => {
+                monsterCollection.find().toArray().then( result => {
+                    res.json(result)
+                })
+            })
+            .catch( err => console.error(err))
+        })
+        
+        app.listen(port, () => {
+            console.log(
+                `listening on port ${port}`
+            )
+        })
+      })
+      .catch(error => console.error(error))
