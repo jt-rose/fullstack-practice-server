@@ -1,10 +1,12 @@
 import express = require("express")
 import mongoDB = require("mongodb")
 import morgan = require("morgan")
+import helmet = require("helmet")
 import { mongoURI } from "./mongoConnection"
 
 const { MongoClient } = mongoDB
 const app = express()
+app.use(helmet())
 app.use(morgan("dev"))
 const port = process.env.PORT || 5000
 
