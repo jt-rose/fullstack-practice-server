@@ -2,32 +2,6 @@ import express = require("express")
 import mongoDB = require("mongodb")
 import { mongoURI } from "./mongoConnection";
 
-/*
-interface Monster {
-    name: string;
-    location: string;
-    hobbies: string;
-}
-
-
-let mockDB: Monster[] = [
-    {
-        name: "Dracula",
-        location: "Transylvania",
-        hobbies: "sucking blood"
-    },
-    {
-        name: "Zombie",
-        location: "RCPD station",
-        hobbies: "eating brains"
-    },
-    {
-        name: "Cthulu",
-        location: "Murky depths",
-        hobbies: "spelunking"
-    }
-]
-*/
 const { MongoClient } = mongoDB
 const app = express()
 const port = process.env.PORT || 5000
@@ -93,7 +67,6 @@ MongoClient.connect(
         app.get("/remove/:monsterID", (req, res) => {
             res.header("Access-Control-Allow-Origin", "*")
             const removeID = req.params.monsterID
-            console.log(removeID)
             monsterCollection.deleteOne({ _id: new mongoDB.ObjectID(removeID) })
             .then( _result => {
                 monsterCollection.find().toArray().then( result => {
