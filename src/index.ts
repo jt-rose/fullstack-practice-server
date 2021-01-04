@@ -8,7 +8,7 @@ import cors = require("cors")
 import bodyParser = require("body-parser")
 import { mongoURI, postgresURI } from "./connections"
 
-const { MongoClient } = mongoDB
+// init express app with middleware
 const app = express()
 app.use(helmet())
 app.use(morgan("dev"))
@@ -16,6 +16,15 @@ app.use(cors())
 app.use(bodyParser.json())
 const port = process.env.PORT || 5000
 
+// test node connection
+app.get("/hellonode", (_req, res) => {
+    res.json({
+        text: "hello Node"
+    })
+})
+
+// connect Mongo and manage DB CRUD
+const { MongoClient } = mongoDB
 MongoClient.connect(
     mongoURI, 
     {
@@ -25,12 +34,7 @@ MongoClient.connect(
         const db = clientMongo.db("monster-mash")
         const monsterCollection = db.collection("monsters")
 
-        app.get("/hellonode", (_req, res) => {
-            res.json({
-                text: "hello Node"
-            })
-        })
-        
+        // get monster data
         app.get("/mongo/api/monsterData", (_req, res) => {
             monsterCollection.find().toArray()
             .then( result => {
@@ -39,6 +43,7 @@ MongoClient.connect(
             .catch( err => console.error(err))
         })
         
+        // add new monster
         app.post("/mongo/api/add", (req, res) => {
             const { name, location, hobbies } = req.body;
             const newMonster = {
@@ -55,6 +60,7 @@ MongoClient.connect(
             .catch( err => console.error(err))
         })
 
+        // edit existing monster
         app.put("/mongo/api/edit", (req, res) => {
             const { monsterID, name, location, hobbies } = req.body;
             const editID = typeof monsterID === "string" ? monsterID : ""
@@ -70,6 +76,7 @@ MongoClient.connect(
             .catch( err => console.error(err))
         })
         
+        // delete monster
         app.delete("/mongo/api/remove", (req, res) => {
             const removeID = req.body.monsterID
             monsterCollection.deleteOne({ _id: new mongoDB.ObjectID(removeID) })
@@ -84,17 +91,18 @@ MongoClient.connect(
       })
       .catch(error => console.error(error))
 
-      // postgres
-        
+// init postgres DB        
 const clientPostgres = new pg.Client({
     connectionString: postgresURI
 })
 
 clientPostgres.connect()
 
+// store SQL query to get monmster data
 const getMonsters = () => clientPostgres.query(`
     SELECT * FROM monster_mash;`)
 
+// get monster data
 app.get("/postgres/api/monsterData", (_req, res) => {
     console.log("postgres monster req recieved")
     getMonsters()
@@ -106,6 +114,7 @@ app.get("/postgres/api/monsterData", (_req, res) => {
   .catch( err => console.error(err.message))
 })
 
+// add new monster
 app.post("/postgres/api/add", (req, res) => {
     const { name, location, hobbies } = req.body;
 
@@ -121,6 +130,7 @@ app.post("/postgres/api/add", (req, res) => {
     .catch( err => console.error(err))
 })
 
+// edit existing monster
 app.put("/postgres/api/edit", (req, res) => {
     const { monsterID, name, location, hobbies } = req.body;
 
@@ -138,6 +148,7 @@ app.put("/postgres/api/edit", (req, res) => {
     .catch(err => console.error(err))
 })
 
+// remove monster
 app.delete("/postgres/api/remove", (req, res) => {
     const removeID = req.body.monsterID
 
@@ -151,8 +162,8 @@ app.delete("/postgres/api/remove", (req, res) => {
     .catch(err => console.error(err))
 })
 
-      app.listen(port, () => {
-        console.log(
-            `listening on port ${port}`
-        )
-    })
+app.listen(port, () => {
+    console.log(
+        `listening on port ${port}`
+    )
+})
