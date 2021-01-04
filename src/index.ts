@@ -5,6 +5,7 @@ import pg = require("pg")
 import morgan = require("morgan")
 import helmet = require("helmet")
 import cors = require("cors")
+import bodyParser = require("body-parser")
 import { mongoURI, postgresURI } from "./connections"
 
 const { MongoClient } = mongoDB
@@ -12,6 +13,7 @@ const app = express()
 app.use(helmet())
 app.use(morgan("dev"))
 app.use(cors())
+app.use(bodyParser.json())
 const port = process.env.PORT || 5000
 
 MongoClient.connect(
@@ -29,7 +31,7 @@ MongoClient.connect(
             })
         })
         
-        app.get("/mongo/monsterData", (_req, res) => {
+        app.get("/mongo/api/monsterData", (_req, res) => {
             monsterCollection.find().toArray()
             .then( result => {
                 res.json(result)
@@ -37,8 +39,8 @@ MongoClient.connect(
             .catch( err => console.error(err))
         })
         
-        app.get("/mongo/add", (req, res) => {
-            const { name, location, hobbies } = req.query;
+        app.post("/mongo/api/add", (req, res) => {
+            const { name, location, hobbies } = req.body;
             const newMonster = {
                 name: typeof name === 'string' ? name : "",
                 location: typeof location === 'string' ? location : "",
@@ -53,8 +55,8 @@ MongoClient.connect(
             .catch( err => console.error(err))
         })
 
-        app.get("/mongo/edit", (req, res) => {
-            const { monsterID, name, location, hobbies } = req.query;
+        app.put("/mongo/api/edit", (req, res) => {
+            const { monsterID, name, location, hobbies } = req.body;
             const editID = typeof monsterID === "string" ? monsterID : ""
             const update = { name, location, hobbies }
             
@@ -68,8 +70,8 @@ MongoClient.connect(
             .catch( err => console.error(err))
         })
         
-        app.get("/mongo/remove/:monsterID", (req, res) => {
-            const removeID = req.params.monsterID
+        app.delete("/mongo/api/remove", (req, res) => {
+            const removeID = req.body.monsterID
             monsterCollection.deleteOne({ _id: new mongoDB.ObjectID(removeID) })
             .then( _result => {
                 monsterCollection.find().toArray().then( result => {
@@ -93,7 +95,7 @@ clientPostgres.connect()
 const getMonsters = () => clientPostgres.query(`
     SELECT * FROM monster_mash;`)
 
-app.get("/postgres/monsterData", (_req, res) => {
+app.get("/postgres/api/monsterData", (_req, res) => {
     console.log("postgres monster req recieved")
     getMonsters()
   .then(res => res.rows)
@@ -104,8 +106,8 @@ app.get("/postgres/monsterData", (_req, res) => {
   .catch( err => console.error(err.message))
 })
 
-app.get("/postgres/add", (req, res) => {
-    const { name, location, hobbies } = req.query;
+app.post("/postgres/api/add", (req, res) => {
+    const { name, location, hobbies } = req.body;
 
     clientPostgres.query(`
     INSERT INTO monster_mash ( name, location, hobbies )
@@ -119,8 +121,8 @@ app.get("/postgres/add", (req, res) => {
     .catch( err => console.error(err))
 })
 
-app.get("/postgres/edit", (req, res) => {
-    const { monsterID, name, location, hobbies } = req.query;
+app.put("/postgres/api/edit", (req, res) => {
+    const { monsterID, name, location, hobbies } = req.body;
 
     clientPostgres.query(`
     UPDATE monster_mash
@@ -136,8 +138,8 @@ app.get("/postgres/edit", (req, res) => {
     .catch(err => console.error(err))
 })
 
-app.get("/postgres/remove/:monsterID", (req, res) => {
-    const removeID = req.params.monsterID
+app.delete("/postgres/api/remove", (req, res) => {
+    const removeID = req.body.monsterID
 
     clientPostgres.query(`
     DELETE FROM monster_mash 
